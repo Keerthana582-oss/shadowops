@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ShadowOps</title>
+<style>
+  :root {
+    --bg: #0B0E14;
+    --panel: #11151F;
+    --panel-2: #161B27;
+    --border: #232937;
+    --text: #E6E9EF;
+    --text-dim: #8891A3;
+    --text-mute: #5C6478;
+    --mono: "SF Mono", "Consolas", "Cascadia Code", monospace;
+    --sans: -apple-system, "Segoe UI", Roboto, sans-serif;
+
+    --critical: #FF4D5E;
+    --critical-bg: rgba(255,77,94,0.12);
+    --high: #FF9D42;
+    --high-bg: rgba(255,157,66,0.12);
+    --medium: #F2CB4E;
+    --medium-bg: rgba(242,203,78,0.12);
+    --low: #3FD6A0;
+    --low-bg: rgba(63,214,160,0.12);
+    --unknown: #6B7280;
+    --unknown-bg: rgba(107,114,128,0.12);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+  }
+  #app {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    height: 100vh;
+  }
+  .sidebar {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-header {
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--low);
+    box-shadow: 0 0 8px var(--low);
+  }
+  .sidebar-sub {
+    color: var(--text-mute);
+    font-size: 11px;
+    margin-top: 4px;
+    font-family: var(--mono);
+  }
+  .incident-list {
+    flex: 1;
+    overflow-y: auto;
+  }
+  .incident-row {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .incident-row:hover { background: var(--panel-2); }
+  .incident-row.active { background: var(--panel-2); border-left: 2px solid var(--text); }
+  .row-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+  }
+  .sev-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 7px;
+    border-radius: 3px;
+  }
+  .row-title {
+    font-size: 13px;
+    font-weight: 500;
+    margin: 4px 0 4px;
+  }
+  .row-meta {
+    color: var(--text-mute);
+    font-size: 11px;
+    font-family: var(--mono);
+  }
+  .main {
+    overflow-y: auto;
+    padding: 32px 40px;
+  }
+  .empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-mute);
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+  .detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+  }
+  .detail-title {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 6px;
+  }
+  .detail-meta {
+    font-family: var(--mono);
+    color: var(--text-dim);
+    font-size: 12px;
+  }
+  .section {
+    margin-bottom: 28px;
+  }
+  .section-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-mute);
+    margin-bottom: 10px;
+  }
+  .summary-box {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    line-height: 1.6;
+    font-size: 14px;
+  }
+  .tag-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    padding: 3px 9px;
+    border-radius: 4px;
+  }
+  .action-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  }
+  .action-desc {
+    font-size: 13.5px;
+    margin-bottom: 6px;
+  }
+  .action-tags {
+    display: flex;
+    gap: 6px;
+  }
+  .risk-pill {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 3px;
+  }
+  .status-pill {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: var(--panel-2);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+  .action-buttons {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  button.decision {
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  button.decision:hover { border-color: var(--text-dim); }
+  button.approve:hover { border-color: var(--low); color: var(--low); }
+  button.reject:hover { border-color: var(--critical); color: var(--critical); }
+  .audit-entry {
+    display: flex;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12.5px;
+  }
+  .audit-time {
+    font-family: var(--mono);
+    color: var(--text-mute);
+    font-size: 11px;
+    white-space: nowrap;
+    min-width: 130px;
+  }
+  .audit-actor {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .refresh-bar {
+    padding: 12px 20px;
+    border-top: 1px solid var(--border);
+  }
+  .refresh-bar button {
+    width: 100%;
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 8px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .refresh-bar button:hover { color: var(--text); border-color: var(--text-dim); }
+  .conn-error {
+    margin: 20px;
+    padding: 12px 14px;
+    background: var(--critical-bg);
+    border: 1px solid var(--critical);
+    color: var(--critical);
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo"><span class="logo-dot"></span>SHADOWOPS</div>
+      <div class="sidebar-sub" id="incident-count">0 incidents</div>
+    </div>
+    <div id="conn-error-slot"></div>
+    <div class="incident-list" id="incident-list"></div>
+    <div class="refresh-bar"><button onclick="loadIncidents()">Refresh</button></div>
+  </div>
+  <div class="main" id="main">
+    <div class="empty-state">Select an incident to view details</div>
+  </div>
+</div>
+
+<script>
+const API_BASE = "http://localhost:8000";
+let incidents = [];
+let selectedId = null;
+
+const SEV_COLORS = {
+  critical: { fg: "var(--critical)", bg: "var(--critical-bg)" },
+  high: { fg: "var(--high)", bg: "var(--high-bg)" },
+  medium: { fg: "var(--medium)", bg: "var(--medium-bg)" },
+  low: { fg: "var(--low)", bg: "var(--low-bg)" },
+  unknown: { fg: "var(--unknown)", bg: "var(--unknown-bg)" },
+};
+
+function sevColor(sev) {
+  return SEV_COLORS[sev] || SEV_COLORS.unknown;
+}
+
+function riskColor(tier) {
+  if (tier === "high") return SEV_COLORS.critical;
+  if (tier === "medium") return SEV_COLORS.medium;
+  return SEV_COLORS.low;
+}
+
+function fmtTime(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+async function loadIncidents() {
+  const slot = document.getElementById("conn-error-slot");
+  slot.innerHTML = "";
+  try {
+    const res = await fetch(`${API_BASE}/incidents`);
+    if (!res.ok) throw new Error("bad response");
+    incidents = await res.json();
+    renderIncidentList();
+  } catch (e) {
+    slot.innerHTML = `<div class="conn-error">Can't reach the API at ${API_BASE}. Is uvicorn running?</div>`;
+  }
+}
+
+function renderIncidentList() {
+  document.getElementById("incident-count").textContent = `${incidents.length} incident${incidents.length === 1 ? "" : "s"}`;
+  const list = document.getElementById("incident-list");
+  list.innerHTML = "";
+  incidents.forEach(inc => {
+    const c = sevColor(inc.severity);
+    const row = document.createElement("div");
+    row.className = "incident-row" + (inc.id === selectedId ? " active" : "");
+    row.onclick = () => selectIncident(inc.id);
+    row.innerHTML = `
+      <div class="row-top">
+        <span class="sev-badge" style="color:${c.fg}; background:${c.bg}">${inc.severity}</span>
+        <span class="row-meta">#${inc.id}</span>
+      </div>
+      <div class="row-title">${inc.rule_name || "Unnamed alert"}</div>
+      <div class="row-meta">${inc.source} &middot; ${fmtTime(inc.created_at)}</div>
+    `;
+    list.appendChild(row);
+  });
+}
+
+async function selectIncident(id) {
+  selectedId = id;
+  renderIncidentList();
+  const main = document.getElementById("main");
+  main.innerHTML = `<div class="empty-state">Loading...</div>`;
+  try {
+    const [detailRes, auditRes] = await Promise.all([
+      fetch(`${API_BASE}/incidents/${id}`),
+      fetch(`${API_BASE}/incidents/${id}/audit-log`)
+    ]);
+    const detail = await detailRes.json();
+    const audit = await auditRes.json();
+    renderDetail(detail.incident, detail.actions, audit);
+  } catch (e) {
+    main.innerHTML = `<div class="conn-error">Failed to load incident detail.</div>`;
+  }
+}
+
+function renderDetail(incident, actions, audit) {
+  const c = sevColor(incident.severity);
+  const main = document.getElementById("main");
+
+  let actionsHtml = "";
+  if (actions.length === 0) {
+    actionsHtml = `<div class="summary-box" style="color:var(--text-mute)">No response actions generated yet.</div>`;
+  } else {
+    actionsHtml = actions.map(a => {
+      const rc = riskColor(a.risk_tier);
+      const canDecide = a.status === "pending";
+      return `
+        <div class="action-card">
+          <div>
+            <div class="action-desc">${a.description}</div>
+            <div class="action-tags">
+              <span class="risk-pill" style="color:${rc.fg}; background:${rc.bg}">${a.risk_tier} risk</span>
+              <span class="status-pill">${a.status}</span>
+              ${a.reversible ? '<span class="status-pill">reversible</span>' : ''}
+            </div>
+          </div>
+          ${canDecide ? `
+            <div class="action-buttons">
+              <button class="decision approve" onclick="decideAction(${a.id}, true, ${incident.id})">Approve</button>
+              <button class="decision reject" onclick="decideAction(${a.id}, false, ${incident.id})">Reject</button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join("");
+  }
+
+  let auditHtml = "";
+  if (audit.length === 0) {
+    auditHtml = `<div style="color:var(--text-mute); font-size:12.5px;">No audit entries yet.</div>`;
+  } else {
+    auditHtml = audit.map(a => `
+      <div class="audit-entry">
+        <span class="audit-time">${fmtTime(a.timestamp)}</span>
+        <span class="audit-actor">${a.actor}</span>
+        <span>${a.event.replace(/_/g, " ")} &mdash; ${a.detail}</span>
+      </div>
+    `).join("");
+  }
+
+  main.innerHTML = `
+    <div class="detail-header">
+      <div>
+        <h1 class="detail-title">${incident.rule_name || "Unnamed alert"}</h1>
+        <div class="detail-meta">#${incident.id} &middot; ${incident.source} &middot; ${fmtTime(incident.created_at)}</div>
+      </div>
+      <span class="sev-badge" style="color:${c.fg}; background:${c.bg}; font-size:12px; padding:5px 12px;">${incident.severity}</span>
+    </div>
+
+    <div class="section">
+      <div class="section-label">AI summary</div>
+      <div class="summary-box">
+        ${incident.ai_summary || "No summary available."}
+        <div class="tag-row">
+          <span class="tag">${incident.attack_category || "uncategorized"}</span>
+          <span class="tag">status: ${incident.status}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Recommended actions</div>
+      ${actionsHtml}
+      ${actions.length === 0 ? `<button class="decision" style="margin-top:10px" onclick="generatePlaybook(${incident.id})">Generate playbook</button>` : ''}
+    </div>
+
+    <div class="section">
+      <div class="section-label">Audit log</div>
+      ${auditHtml}
+    </div>
+  `;
+}
+
+async function generatePlaybook(incidentId) {
+  await fetch(`${API_BASE}/incidents/${incidentId}/generate-playbook`, { method: "POST" });
+  selectIncident(incidentId);
+}
+
+async function decideAction(actionId, approve, incidentId) {
+  await fetch(`${API_BASE}/actions/${actionId}/decision`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ approve }),
+  });
+  selectIncident(incidentId);
+}
+
+loadIncidents();
+setInterval(loadIncidents, 15000);
+</script>
+</body>
+</html>

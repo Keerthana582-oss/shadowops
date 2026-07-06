@@ -1,0 +1,71 @@
+[
+  {
+    "source": "ELK",
+    "rule_name": "Multiple Failed Logins",
+    "host": "web-prod-03",
+    "user": "svc_deploy",
+    "src_ip": "185.220.101.44",
+    "event_count": 27,
+    "time_window_minutes": 5,
+    "raw_message": "27 failed SSH login attempts for user svc_deploy from 185.220.101.44 within 5 minutes"
+  },
+  {
+    "source": "ELK",
+    "rule_name": "Unusual Outbound Data Transfer",
+    "host": "db-prod-01",
+    "user": "app_service",
+    "dest_ip": "45.33.12.78",
+    "bytes_transferred": 2500000000,
+    "raw_message": "db-prod-01 transferred 2.5GB to external IP 45.33.12.78 outside of business hours"
+  },
+  {
+    "source": "ELK",
+    "rule_name": "Privilege Escalation Detected",
+    "host": "corp-laptop-114",
+    "user": "jsmith",
+    "action": "added to local Administrators group",
+    "raw_message": "User jsmith was added to the local Administrators group on corp-laptop-114 by an unrecognized process"
+  },
+  {
+    "source": "ELK",
+    "rule_name": "Known Malicious IP Contacted",
+    "host": "web-prod-01",
+    "dest_ip": "91.243.85.12",
+    "threat_feed_match": "Emotet C2",
+    "raw_message": "web-prod-01 made an outbound connection to 91.243.85.12, which matches a known Emotet C2 indicator"
+  },
+  {
+    "source": "ELK",
+    "rule_name": "New Admin Account Created",
+    "host": "domain-controller-01",
+    "user": "SYSTEM",
+    "new_account": "svc_backup_admin",
+    "raw_message": "A new account 'svc_backup_admin' was created with domain admin privileges on domain-controller-01"
+  },
+  {
+    "source": "ELK",
+    "rule_name": "Suspicious PowerShell Execution",
+    "host": "corp-laptop-089",
+    "user": "mchen",
+    "command_snippet": "powershell -enc <base64 blob>",
+    "raw_message": "Encoded PowerShell command executed on corp-laptop-089 by user mchen, parent process winword.exe"
+  },
+  {
+    "source": "ELK",
+    "rule_name": "Impossible Travel Login",
+    "host": "vpn-gateway",
+    "user": "rpatel",
+    "location_1": "Chicago, US",
+    "location_2": "Bucharest, RO",
+    "time_between_logins_minutes": 12,
+    "raw_message": "User rpatel logged in from Chicago and then Bucharest 12 minutes apart"
+  },
+  {
+    "source": "ELK",
+    "rule_name": "Ransomware File Extension Pattern",
+    "host": "fileserver-02",
+    "user": "svc_backup",
+    "files_affected": 4200,
+    "raw_message": "4200 files on fileserver-02 renamed with .locked extension within 3 minutes"
+  }
+]
