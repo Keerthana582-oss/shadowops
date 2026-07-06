@@ -9,7 +9,7 @@ import json
 import time
 import requests
 
-API_BASE = "http://localhost:8000"
+API_BASE = "https://shadowops.onrender.com"
 
 with open("../mock_data/sample_alerts.json") as f:
     alerts = json.load(f)
