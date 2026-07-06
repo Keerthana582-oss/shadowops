@@ -156,6 +156,11 @@ def get_incident(incident_id: int, db: Session = Depends(get_db)):
     return {"incident": incident, "actions": actions}
 
 
+@app.get("/actions")
+def list_all_actions(db: Session = Depends(get_db)):
+    return db.query(Action).all()
+
+
 @app.get("/incidents/{incident_id}/audit-log")
 def get_audit_log(incident_id: int, db: Session = Depends(get_db)):
     logs = db.query(AuditLog).filter(AuditLog.incident_id == incident_id).order_by(AuditLog.timestamp).all()

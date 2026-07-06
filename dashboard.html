@@ -286,7 +286,8 @@
     <div class="incident-list" id="incident-list"></div>
     <div class="refresh-bar"><button onclick="loadIncidents()">Refresh</button></div>
   </div>
-  <div class="main" id="main">
+  <div class="metrics-bar" id="metrics-bar"></div>
+<div class="main" id="main">
     <div class="empty-state">Select an incident to view details</div>
   </div>
 </div>
@@ -328,6 +329,7 @@ async function loadIncidents() {
     if (!res.ok) throw new Error("bad response");
     incidents = await res.json();
     renderIncidentList();
+    loadMetrics();
   } catch (e) {
     slot.innerHTML = `<div class="conn-error">Can't reach the API at ${API_BASE}. Is uvicorn running?</div>`;
   }
@@ -462,6 +464,33 @@ async function decideAction(actionId, approve, incidentId) {
     body: JSON.stringify({ approve }),
   });
   selectIncident(incidentId);
+}
+
+function renderMetrics(incidents, actions) {
+  const counts = { critical: 0, high: 0, medium: 0, low: 0 };
+  incidents.forEach(inc => {
+    if (counts[inc.severity] !== undefined) counts[inc.severity]++;
+  });
+  const executed = actions.filter(a => a.status === "executed").length;
+  const pending = actions.filter(a => a.status === "pending").length;
+
+  const bar = document.getElementById("metrics-bar");
+  bar.innerHTML = `
+    <div class="metric-card"><div class="metric-label">Critical</div><div class="metric-value" style="color:var(--critical)">${counts.critical}</div></div>
+    <div class="metric-card"><div class="metric-label">High</div><div class="metric-value" style="color:var(--high)">${counts.high}</div></div>
+    <div class="metric-card"><div class="metric-label">Medium</div><div class="metric-value" style="color:var(--medium)">${counts.medium}</div></div>
+    <div class="metric-card"><div class="metric-label">Low</div><div class="metric-value" style="color:var(--low)">${counts.low}</div></div>
+    <div class="metric-card"><div class="metric-label">Auto-executed</div><div class="metric-value">${executed}</div></div>
+    <div class="metric-card"><div class="metric-label">Pending approval</div><div class="metric-value">${pending}</div></div>
+  `;
+}
+
+async function loadMetrics() {
+  try {
+    const res = await fetch(`${API_BASE}/actions`);
+    const actions = await res.json();
+    renderMetrics(incidents, actions);
+  } catch (e) {}
 }
 
 loadIncidents();
